@@ -1,0 +1,17 @@
+[package]
+name = "passcualito"
+version = "0.1.0"
+description = "Minimal Password Manager"
+authors = ["Javier Orfo <javierorfo@protonmail.com>"]
+license = "MIT"
+edition = "2021"
+repository = "https://github.com/javiorfo/passcualito"
+homepage = "https://github.com/javiorfo/passcualito#readme"
+keywords = ["linux", "password-manager", "passwords"]
+
+[dependencies]
+aes = "0.7"
+block-modes = "0.8"
+rand = "0.8"
+ring = "0.16"
+rpassword = "5.0"
