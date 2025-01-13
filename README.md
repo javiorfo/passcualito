@@ -1,2 +1,2 @@
 # passcualito
-Simple Password Manager for Linux written in Rust
+*Simple Password Manager for Linux*
