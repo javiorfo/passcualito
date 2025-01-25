@@ -34,7 +34,9 @@ func list() *cobra.Command {
 		Long:  "List all properties of a key. Ex: passc list my_key",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := createPasscualitoFileIfNotExist(); err != nil {
+			encryptor, err := checkMasterPassword()
+			if err != nil {
+				// TODO logger
 				fmt.Println(err.Error())
 				return
 			}
@@ -42,7 +44,13 @@ func list() *cobra.Command {
 			if len(args) == 1 {
 				fmt.Println("one")
 			} else {
-				fmt.Println("zero")
+				text, err := encryptor.ReadEncryptedText()
+				if err != nil {
+					// TODO logger
+					fmt.Println(err.Error())
+					return
+				}
+				fmt.Println("zero", text)
 			}
 		},
 	}

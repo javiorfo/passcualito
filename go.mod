@@ -3,6 +3,7 @@ module github.com/javiorfo/passcualito
 go 1.23.4
 
 require (
+	github.com/javiorfo/steams v1.0.0
 	github.com/spf13/cobra v1.8.1
 	golang.org/x/term v0.28.0
 )
