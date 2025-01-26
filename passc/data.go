@@ -3,9 +3,9 @@ package passc
 import "encoding/json"
 
 type Data struct {
-	Key      string  `json:"key"`
-	Password string  `json:"password"`
-	Info     *string `json:"info,omitempty"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
+	Info     string `json:"info"`
 }
 
 func (d Data) ToJSON() (*string, error) {

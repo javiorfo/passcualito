@@ -4,7 +4,7 @@ import "testing"
 
 func TestData(t *testing.T) {
 	data := Data{
-		Key:      "github",
+		Name:      "github",
 		Password: "12345",
 	}
 	json, err := data.ToJSON()

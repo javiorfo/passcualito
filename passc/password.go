@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"golang.org/x/term"
+	"github.com/howeyc/gopass"
+	"github.com/javiorfo/steams/opt"
 )
 
-const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
-
-func generateRandomPassword(length int) (*string, error) {
+func generateRandomPassword(size opt.Optional[int]) (*string, error) {
+	length := size.OrElse(20)
 	password := make([]byte, length)
 
 	_, err := rand.Read(password)
@@ -21,7 +21,7 @@ func generateRandomPassword(length int) (*string, error) {
 	}
 
 	for i := 0; i < length; i++ {
-		password[i] = charset[int(password[i])%len(charset)]
+		password[i] = passcCharset[int(password[i])%len(passcCharset)]
 	}
 
 	str := string(password)
@@ -63,7 +63,7 @@ func checkMasterPassword() (*Encryptor, error) {
 	}
 
 	fmt.Print(passcMasterPasswordText)
-	bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
+	bytePassword, err := gopass.GetPasswdMasked()
 	if err != nil {
 		return nil, fmt.Errorf("Error reading password: %v", err)
 	}

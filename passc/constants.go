@@ -1,10 +1,17 @@
 package passc
 
 const (
-	passcInitTitle          = "\033[1mPasscualito Init\033[0m"
-	passcLoginTitle         = "\033[1mPasscualito Login\033[0m"
+	passcInitTitle          = "\033[1m Passcualito Init\033[0m"
+	passcLoginTitle         = "\033[1m󰍂 Passcualito Login\033[0m"
+	passcStoreTitle         = "\033[1m󰪶 Passcualito Store\033[0m"
+	passcMasterPasswordText = " Master Password: "
+	passcEmptyFile          = " No passwords stored"
+	passcInvalidPassword    = " Invalid Password"
+	passcLogoutText         = "󰍃 Logged out"
+	passcVersion            = "Passcualito v0.1.0"
 	passcDirFolder          = ".passcualito"
 	passcKeysFile           = "keys.passc"
-	passcMasterPasswordText = "  Master Password: "
 	passcExtension          = ".passc"
+	passcItemSeparator      = "|"
+	passcCharset            = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
 )
