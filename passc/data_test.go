@@ -4,10 +4,10 @@ import "testing"
 
 func TestData(t *testing.T) {
 	data := Data{
-		Name:      "github",
+		Name:     "github",
 		Password: "12345",
 	}
-	json, err := data.ToJSON()
+	json, err := data.toJSON()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -19,6 +19,6 @@ func TestData(t *testing.T) {
         "info": "some info"
     }`
 
-	data.FromJSON([]byte(jsonStr))
+	data.fromJSON([]byte(jsonStr))
 	t.Logf("Data from JSON: %#v", data)
 }

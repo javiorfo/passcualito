@@ -63,6 +63,7 @@ func checkMasterPassword() (*Encryptor, error) {
 	}
 
 	fmt.Print(passcMasterPasswordText)
+	// TODO validate length of master password
 	bytePassword, err := gopass.GetPasswdMasked()
 	if err != nil {
 		return nil, fmt.Errorf("Error reading password: %v", err)

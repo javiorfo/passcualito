@@ -2,8 +2,7 @@ package passc
 
 import (
 	"fmt"
-	"strings"
-
+	"github.com/atotto/clipboard"
 	"github.com/spf13/cobra"
 )
 
@@ -14,6 +13,7 @@ func Builder() *cobra.Command {
 	rootCmd.AddCommand(version())
 	rootCmd.AddCommand(logout())
 	rootCmd.AddCommand(list())
+	rootCmd.AddCommand(copy())
 	rootCmd.AddCommand(add())
 
 	return rootCmd
@@ -58,12 +58,14 @@ func add() *cobra.Command {
 				return
 			}
 			name := args[0]
+
+			// TODO check password
 			data := Data{
 				Name:     name,
 				Password: password,
 				Info:     info,
 			}
-			json, err := data.ToJSON()
+			json, err := data.toJSON()
 			if err != nil {
 				// TODO logger
 				fmt.Println(err.Error())
@@ -101,36 +103,77 @@ func list() *cobra.Command {
 				return
 			}
 
-			if len(args) == 1 {
-				fmt.Println("one")
-			} else {
-				content, err := encryptor.ReadEncryptedText()
-				if err != nil {
-					// TODO logger
-					fmt.Println(passcInvalidPassword)
-					removeTemp()
-					return
+			content, err := encryptor.ReadEncryptedText()
+			if err != nil {
+				// TODO logger
+				fmt.Println(passcInvalidPassword)
+				removeTemp()
+				return
+			}
+			items := stringToDataSlice(content)
+			length := len(items)
+			if length == 0 {
+				fmt.Println(passcEmptyFile)
+				return
+			}
+			isSearcOne := len(args) == 1
+			fmt.Println(passcStoreTitle)
+			for i, data := range items {
+				isEnd := i == length-1
+				if isSearcOne {
+					name := args[0]
+					if data.Name == name {
+						data.print(true)
+						break
+					}
+					if isEnd {
+						fmt.Printf(passcNameNotFoundText, name)
+					}
+				} else {
+					data.print(isEnd)
 				}
-				fmt.Println(passcStoreTitle)
-				items := strings.Split(content, passcItemSeparator)
-				length := len(items)
-				for i, v := range items {
-					var data Data
-					err = data.FromJSON([]byte(v))
-					if err != nil {
-						// TODO logger
-						fmt.Println(err.Error())
-						return
-					}
-					fmt.Println("│")
-					fmt.Println("├─ \033[1mName:\033[0m", data.Name)
-					fmt.Println("├─── \033[1mPassword:\033[0m", data.Password)
-					if i == length-1 {
-						fmt.Println("└─── \033[1mInfo:\033[0m", data.Info)
-					} else {
-						fmt.Println("├─── \033[1mInfo:\033[0m", data.Info)
+			}
+		},
+	}
+}
 
+func copy() *cobra.Command {
+	return &cobra.Command{
+		Use:   "copy [key]",
+		Short: "Copy password to clipboard",
+		Long:  "Copy password to clipboard. Ex: passc copy my_key",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			encryptor, err := checkMasterPassword()
+			if err != nil {
+				// TODO logger
+				fmt.Println(err.Error())
+				return
+			}
+
+			content, err := encryptor.ReadEncryptedText()
+			if err != nil {
+				// TODO logger
+				fmt.Println(passcInvalidPassword)
+				removeTemp()
+				return
+			}
+			items := stringToDataSlice(content)
+			length := len(items)
+			for i, data := range items {
+				isEnd := i == length-1
+				name := args[0]
+				if data.Name == name {
+					err = clipboard.WriteAll(data.Password)
+					if err != nil {
+						// TODO err clipboard
+					} else {
+						fmt.Printf(passcClipboardText, name)
 					}
+					break
+				}
+				if isEnd {
+					fmt.Printf(passcNameNotFoundText, name)
 				}
 
 			}
