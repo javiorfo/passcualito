@@ -1,8 +1,11 @@
 package passc
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"crypto/aes"
 	"crypto/cipher"
@@ -109,4 +112,42 @@ func (e Encryptor) readEncryptedText() (string, error) {
 	}
 
 	return string(plaintext), nil
+}
+
+func exportToFile(content string) error {
+	items := strings.Split(content, passcItemSeparator)
+	file, err := os.OpenFile(passcExportFilename, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.WriteString("[")
+	if err != nil {
+		return err
+	}
+
+	length := len(items)
+	for i, v := range items {
+		var prettyJSON bytes.Buffer
+		err := json.Indent(&prettyJSON, []byte(v), "", "  ")
+		if err != nil {
+			return err
+		}
+
+		coma := ","
+		if i == length-1 {
+			coma = ""
+		}
+
+		_, err = file.WriteString(prettyJSON.String() + coma)
+		if err != nil {
+			return err
+		}
+	}
+	_, err = file.WriteString("]")
+	if err != nil {
+		return err
+	}
+	return nil
 }

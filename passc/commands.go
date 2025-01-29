@@ -17,13 +17,14 @@ func Builder() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use: "passc",
 	}
-	rootCmd.AddCommand(version())
-	rootCmd.AddCommand(logout())
-	rootCmd.AddCommand(list())
-	rootCmd.AddCommand(copy())
 	rootCmd.AddCommand(add())
+	rootCmd.AddCommand(copy())
+	rootCmd.AddCommand(export())
+	rootCmd.AddCommand(list())
+	rootCmd.AddCommand(logout())
 	rootCmd.AddCommand(password())
 	rootCmd.AddCommand(remove())
+	rootCmd.AddCommand(version())
 
 	return rootCmd
 }
@@ -35,6 +36,38 @@ func version() *cobra.Command {
 		Long:  "passcualito version",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println(passcVersion)
+		},
+	}
+}
+
+func export() *cobra.Command {
+	return &cobra.Command{
+		Use:   "export",
+		Short: "Export data in a JSON file",
+		Long:  "Export data in a JSON file",
+		Run: func(cmd *cobra.Command, args []string) {
+			encryptor, err := checkMasterPassword()
+			if err != nil {
+				log.Println("checking Master Password: ", err.Error())
+				return
+			}
+
+			content, err := encryptor.readEncryptedText()
+			if err != nil {
+				if errors.Is(err, emptyFile) {
+					fmt.Println(err.Error())
+					return
+				}
+				fmt.Println(passcInvalidPassword)
+				removeTemp()
+				return
+			}
+
+			if err := exportToFile(content); err != nil {
+				fmt.Println(passcExportErr)
+			} else {
+				fmt.Printf(passcExportText, passcExportFilename)
+			}
 		},
 	}
 }
@@ -179,17 +212,26 @@ func password() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			number, err := strconv.Atoi(args[0])
 			if err != nil {
-				fmt.Println(" Parameter must be a number")
+				fmt.Println(passcPasswordParamErrNumber)
 				return
 			}
 			if number < 1 {
-				fmt.Println(" Parameter must be a positive number")
+				fmt.Println(passcPasswordParamErrPositive)
 				return
 			}
 
 			var optCharset opt.Optional[string]
-			if charset != "" {
-				optCharset = opt.Of(charset)
+			switch charset {
+			case "n":
+				optCharset = opt.Of(passcCharsetNumeric)
+			case "a":
+				optCharset = opt.Of(passcCharsetAlpha)
+			case "an":
+				optCharset = opt.Of(passcCharsetAlphaNumeric)
+			case "anc":
+				optCharset = opt.Of(passcCharsetAlphaNumericCap)
+			default:
+				optCharset = opt.Of(passcCharset)
 			}
 
 			psswd, err := generateRandomPassword(opt.Of(number), optCharset)
@@ -200,7 +242,7 @@ func password() *cobra.Command {
 			fmt.Println(*psswd)
 		},
 	}
-	password.Flags().StringVarP(&charset, "charset", "c", "", "Charset for the password")
+	password.Flags().StringVarP(&charset, "charset", "c", "", "Charset for the password (a, n, an or anc)")
 
 	return password
 }
