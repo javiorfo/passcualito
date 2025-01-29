@@ -17,8 +17,23 @@ type Encryptor struct {
 	FilePath       string
 }
 
-func (e Encryptor) EncryptText(text string) error {
-	file, err := os.OpenFile(e.FilePath, os.O_CREATE|os.O_WRONLY, 0644)
+var emptyFile = errors.New(passcEmptyFile)
+
+func (e Encryptor) deleteContent() error {
+	file, err := os.OpenFile(e.FilePath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return nil
+}
+
+func (e Encryptor) encryptText(text string, isAppend bool) error {
+	flag := os.O_CREATE | os.O_WRONLY
+	if !isAppend {
+		flag = os.O_WRONLY | os.O_TRUNC | os.O_CREATE
+	}
+	file, err := os.OpenFile(e.FilePath, flag, 0644)
 	if err != nil {
 		return err
 	}
@@ -27,11 +42,13 @@ func (e Encryptor) EncryptText(text string) error {
 	finalText := text
 	stat, _ := file.Stat()
 	if stat.Size() != 0 {
-		decryptedText, err := e.ReadEncryptedText()
-		if err != nil {
-			return err
+		if isAppend {
+			decryptedText, err := e.readEncryptedText()
+			if err != nil {
+				return err
+			}
+			finalText += passcItemSeparator + decryptedText
 		}
-		finalText += passcItemSeparator + decryptedText
 	}
 
 	block, err := aes.NewCipher([]byte(e.MasterPassword))
@@ -58,7 +75,7 @@ func (e Encryptor) EncryptText(text string) error {
 	return nil
 }
 
-func (e Encryptor) ReadEncryptedText() (string, error) {
+func (e Encryptor) readEncryptedText() (string, error) {
 	file, err := os.Open(e.FilePath)
 	if err != nil {
 		return "", fmt.Errorf("Error open file %s: %v", e.FilePath, err)
@@ -82,7 +99,7 @@ func (e Encryptor) ReadEncryptedText() (string, error) {
 
 	nonce := data[:gcm.NonceSize()]
 	if len(data) == 0 {
-		return "", errors.New(passcEmptyFile)
+		return "", emptyFile
 	}
 	ciphertext := data[gcm.NonceSize():]
 

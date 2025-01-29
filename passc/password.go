@@ -11,8 +11,13 @@ import (
 	"github.com/javiorfo/steams/opt"
 )
 
-func generateRandomPassword(size opt.Optional[int]) (*string, error) {
+func generateRandomPasswordDefault() (*string, error) {
+	return generateRandomPassword(opt.Empty[int](), opt.Empty[string]())
+}
+
+func generateRandomPassword(size opt.Optional[int], charsetStr opt.Optional[string]) (*string, error) {
 	length := size.OrElse(20)
+	charset := charsetStr.OrElse(passcCharset)
 	password := make([]byte, length)
 
 	_, err := rand.Read(password)
@@ -21,7 +26,7 @@ func generateRandomPassword(size opt.Optional[int]) (*string, error) {
 	}
 
 	for i := 0; i < length; i++ {
-		password[i] = passcCharset[int(password[i])%len(passcCharset)]
+		password[i] = charset[int(password[i])%len(charset)]
 	}
 
 	str := string(password)

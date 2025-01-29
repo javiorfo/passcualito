@@ -1,8 +1,15 @@
 package passc
 
 import (
+	"errors"
 	"fmt"
+	"log"
+	"strconv"
+	"strings"
+
 	"github.com/atotto/clipboard"
+	"github.com/javiorfo/steams"
+	"github.com/javiorfo/steams/opt"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +22,8 @@ func Builder() *cobra.Command {
 	rootCmd.AddCommand(list())
 	rootCmd.AddCommand(copy())
 	rootCmd.AddCommand(add())
+	rootCmd.AddCommand(password())
+	rootCmd.AddCommand(remove())
 
 	return rootCmd
 }
@@ -36,7 +45,11 @@ func logout() *cobra.Command {
 		Short: "Logout of the app",
 		Long:  "Logout of the app. This allows you to enter the master password again",
 		Run: func(cmd *cobra.Command, args []string) {
-			removeTemp()
+			err := removeTemp()
+			if err != nil {
+				log.Println("removing temp file: ", err.Error())
+				return
+			}
 			fmt.Println(passcLogoutText)
 		},
 	}
@@ -53,33 +66,40 @@ func add() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
-				// TODO logger
-				fmt.Println(err.Error())
+				log.Println("checking Master Password: ", err.Error())
 				return
 			}
 			name := args[0]
 
-			// TODO check password
-			data := Data{
-				Name:     name,
-				Password: password,
-				Info:     info,
-			}
-			json, err := data.toJSON()
+			data, err := newData(name, password, info)
 			if err != nil {
-				// TODO logger
-				fmt.Println(err.Error())
+				log.Println("generating random password: ", err.Error())
 				return
 			}
-			// TODO check "name" does not exist
-			if err := encryptor.EncryptText(*json); err != nil {
-				// TODO logger
+
+			json, err := data.toJSON()
+			if err != nil {
+				log.Println("converting data to JSON: ", err.Error())
+				return
+			}
+
+			content, err := encryptor.readEncryptedText()
+			if err != nil {
 				fmt.Println(passcInvalidPassword)
 				removeTemp()
 				return
 			}
 
-			fmt.Println("Done")
+			if isNameTaken(content, name) {
+				fmt.Printf(passcNameTakenText, name)
+				return
+			}
+
+			if err := encryptor.encryptText(*json, true); err != nil {
+				return
+			}
+
+			fmt.Printf(passcEntryCreatedText, name)
 		},
 	}
 
@@ -87,6 +107,102 @@ func add() *cobra.Command {
 	add.Flags().StringVarP(&info, "info", "i", "", "Additional info for the entry")
 
 	return add
+}
+
+func remove() *cobra.Command {
+	return &cobra.Command{
+		Use:   "remove [name]",
+		Short: "Remove the entry",
+		Long:  "Remove the entry. Ex: passc remove entry_name",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			encryptor, err := checkMasterPassword()
+			if err != nil {
+				log.Println("checking Master Password: ", err.Error())
+				return
+			}
+
+			content, err := encryptor.readEncryptedText()
+			if err != nil {
+				fmt.Println(passcInvalidPassword)
+				removeTemp()
+				return
+			}
+
+			contentLength := len(content)
+			name := args[0]
+
+			result := steams.OfSlice(strings.Split(content, passcItemSeparator)).
+				Filter(predicateByName(name)).Reduce("", reducer)
+
+			resultLength := len(result)
+			if contentLength == resultLength {
+				fmt.Printf(passcNameNotFoundText, name)
+			} else {
+				if resultLength == 0 {
+					if err := encryptor.deleteContent(); err != nil {
+						log.Println("deleting file: ", err.Error())
+						return
+					}
+				} else {
+					if err := encryptor.encryptText(result, false); err != nil {
+						log.Println("encryting text: ", err.Error())
+						return
+					}
+				}
+			}
+		},
+	}
+}
+
+func reducer(a, b string) string {
+	if a == "" {
+		return b
+	} else {
+		return a + passcItemSeparator + b
+	}
+}
+
+func predicateByName(name string) func(string) bool {
+	return func(value string) bool {
+		return !strings.Contains(value, fmt.Sprintf(`"name":"%s"`, name))
+	}
+}
+
+func password() *cobra.Command {
+	var charset string
+	password := &cobra.Command{
+		Use:   "password [number]",
+		Short: "Generates a password of the number passed",
+		Long:  "Generates a password of the number passed. Ex: passc password 12",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			number, err := strconv.Atoi(args[0])
+			if err != nil {
+				fmt.Println(" Parameter must be a number")
+				return
+			}
+			if number < 1 {
+				fmt.Println(" Parameter must be a positive number")
+				return
+			}
+
+			var optCharset opt.Optional[string]
+			if charset != "" {
+				optCharset = opt.Of(charset)
+			}
+
+			psswd, err := generateRandomPassword(opt.Of(number), optCharset)
+			if err != nil {
+				log.Println("generating random password: ", err.Error())
+				return
+			}
+			fmt.Println(*psswd)
+		},
+	}
+	password.Flags().StringVarP(&charset, "charset", "c", "", "Charset for the password")
+
+	return password
 }
 
 func list() *cobra.Command {
@@ -98,25 +214,30 @@ func list() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
-				// TODO logger
-				fmt.Println(err.Error())
+				log.Println("checking Master Password: ", err.Error())
 				return
 			}
 
-			content, err := encryptor.ReadEncryptedText()
+			content, err := encryptor.readEncryptedText()
 			if err != nil {
-				// TODO logger
+				if errors.Is(err, emptyFile) {
+					fmt.Println(err.Error())
+					return
+				}
 				fmt.Println(passcInvalidPassword)
 				removeTemp()
 				return
 			}
+
 			items := stringToDataSlice(content)
 			length := len(items)
 			if length == 0 {
 				fmt.Println(passcEmptyFile)
 				return
 			}
+
 			isSearcOne := len(args) == 1
+
 			fmt.Println(passcStoreTitle)
 			for i, data := range items {
 				isEnd := i == length-1
@@ -146,14 +267,12 @@ func copy() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
-				// TODO logger
-				fmt.Println(err.Error())
+				log.Println("checking Master Password: ", err.Error())
 				return
 			}
 
-			content, err := encryptor.ReadEncryptedText()
+			content, err := encryptor.readEncryptedText()
 			if err != nil {
-				// TODO logger
 				fmt.Println(passcInvalidPassword)
 				removeTemp()
 				return
@@ -166,7 +285,7 @@ func copy() *cobra.Command {
 				if data.Name == name {
 					err = clipboard.WriteAll(data.Password)
 					if err != nil {
-						// TODO err clipboard
+						log.Println("copying to clipboard: ", err.Error())
 					} else {
 						fmt.Printf(passcClipboardText, name)
 					}

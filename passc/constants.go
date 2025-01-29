@@ -9,6 +9,8 @@ const (
 	passcInvalidPassword    = " Invalid Password"
 	passcLogoutText         = "󰍃 Logged out"
 	passcNameNotFoundText   = "󰮗 Name \033[1m%s\033[0m not found\n"
+	passcNameTakenText      = "󰮗 Name \033[1m%s\033[0m already exists\n"
+	passcEntryCreatedText   = "󰸞 Entry \033[1m%s\033[0m created!\n"
 	passcClipboardText      = "󰢨 Copied \033[1m%s\033[0m to clipboard"
 	passcVersion            = "Passcualito v0.1.0"
 	passcDirFolder          = ".passcualito"

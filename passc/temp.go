@@ -10,13 +10,13 @@ import (
 )
 
 func newTemp(masterPassword string) error {
-	key, err := generateRandomPassword(opt.Of(16))
+	key, err := generateRandomPassword(opt.Of(16), opt.Empty[string]())
 	filePath := fmt.Sprintf("%s/%s%s", os.TempDir(), *key, passcExtension)
 	if err != nil {
 		return fmt.Errorf("Error generating tmp password: %v", err)
 	}
 	encryptor := &Encryptor{MasterPassword: *key, FilePath: filePath}
-	encryptor.EncryptText(masterPassword)
+	encryptor.encryptText(masterPassword, false)
 	return nil
 }
 
@@ -67,7 +67,7 @@ func getTempEncryptor(filePath string) opt.Optional[Encryptor] {
 		FilePath:       tempFilePath,
 		MasterPassword: strings.TrimSuffix(strings.TrimPrefix(tempFilePath, tempDir+"/"), passcExtension),
 	}
-	password, err := tempEncryptor.ReadEncryptedText()
+	password, err := tempEncryptor.readEncryptedText()
 	if err != nil {
 		return opt.Empty[Encryptor]()
 	}

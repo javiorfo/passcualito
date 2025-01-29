@@ -14,6 +14,23 @@ type Data struct {
 	Info     string `json:"info"`
 }
 
+func newData(name, password, info string) (*Data, error) {
+	data := Data{
+		Name: name,
+		Info: info,
+	}
+
+	if password == "" {
+		pwd, err := generateRandomPasswordDefault()
+		if err != nil {
+			return nil, err
+		}
+		password = *pwd
+	}
+	data.Password = password
+	return &data, nil
+}
+
 func (d Data) toJSON() (*string, error) {
 	json, err := json.Marshal(d)
 	if err != nil {
@@ -48,10 +65,17 @@ func stringToDataSlice(content string) []Data {
 	return steams.Mapping(steams.OfSlice(items), func(v string) Data {
 		var data Data
 		err := data.fromJSON([]byte(v))
-		if err != nil {
-			// TODO replace with log
-			fmt.Println(err.Error())
-		}
+		_ = err // Unimplemented
 		return data
 	}).Collect()
+}
+
+func isNameTaken(content, name string) bool {
+	items := strings.Split(content, passcItemSeparator)
+	return steams.OfSlice(items).AnyMatch(func(v string) bool {
+		var data Data
+		err := data.fromJSON([]byte(v))
+		_ = err
+		return data.Name == name
+	})
 }
