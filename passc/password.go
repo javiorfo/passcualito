@@ -47,7 +47,7 @@ func alignPassword(password string) string {
 func checkMasterPassword() (*Encryptor, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return nil, fmt.Errorf("Error finding user home dir: %v", err)
+		return nil, fmt.Errorf("finding user home dir: %v", err)
 	}
 
 	dirPath := filepath.Join(homeDir, passcDirFolder)
@@ -71,19 +71,19 @@ func checkMasterPassword() (*Encryptor, error) {
 	// TODO validate length of master password
 	bytePassword, err := gopass.GetPasswdMasked()
 	if err != nil {
-		return nil, fmt.Errorf("Error reading password: %v", err)
+		return nil, fmt.Errorf("%v", err)
 	}
 	masterPassword = alignPassword(string(bytePassword))
 
 	if errFile != nil {
 		err = os.MkdirAll(dirPath, 0755)
 		if err != nil {
-			return nil, fmt.Errorf("Error creating directory: %v", err)
+			return nil, fmt.Errorf("creating directory: %v", err)
 		}
 
 		file, err := os.Create(filePath)
 		if err != nil {
-			return nil, fmt.Errorf("Error creating file: %v", err)
+			return nil, fmt.Errorf("creating file: %v", err)
 		}
 		defer file.Close()
 	}

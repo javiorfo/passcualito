@@ -3,6 +3,7 @@ package passc
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/javiorfo/steams"
@@ -78,4 +79,36 @@ func isNameTaken(content, name string) bool {
 		_ = err
 		return data.Name == name
 	})
+}
+
+func getDataSliceFromJsonFile(filePath string) ([]Data, error) {
+	jsonData, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var data []Data
+	err = json.Unmarshal(jsonData, &data)
+	if err != nil {
+		return nil, err
+	}
+
+    if err := getRepeatedNames(data); err != nil {
+        return nil, err
+    }
+
+	return data, nil
+}
+
+func getRepeatedNames(dataSlice []Data) error {
+    repeated :=  steams.GroupByCounting(steams.OfSlice(dataSlice), func(d Data) string {
+		return d.Name
+	}).Filter(func(s string, i int) bool {
+        return i > 1
+    }).KeysToSteam().Collect()
+
+    if len(repeated) > 0 {
+        return fmt.Errorf("repeated names (%s)", strings.Join(repeated, ", "))
+    }
+    return nil
 }

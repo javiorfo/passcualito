@@ -51,7 +51,7 @@ func getTempEncryptor(filePath string) opt.Optional[Encryptor] {
 			return err
 		}
 
-		if !info.IsDir() && filepath.Ext(info.Name()) == passcExtension {
+		if !info.IsDir() && filepath.Ext(path) == passcExtension {
 			tempFilePath = path
 			return fmt.Errorf(noPassc)
 		}

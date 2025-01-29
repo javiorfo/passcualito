@@ -1,6 +1,7 @@
 package passc
 
 const (
+	passcAppCommandName           = "passc"
 	passcInitTitle                = "\033[1m Passcualito Init\033[0m"
 	passcLoginTitle               = "\033[1m󰍂 Passcualito Login\033[0m"
 	passcStoreTitle               = "\033[1m󰪶 Passcualito Store\033[0m"
@@ -10,7 +11,10 @@ const (
 	passcLogoutText               = "󰍃 Logged out"
 	passcNameNotFoundText         = "󰮗 Name \033[1m%s\033[0m not found\n"
 	passcNameTakenText            = " Name \033[1m%s\033[0m already exists\n"
-	passcEntryCreatedText         = "󰸞 Entry \033[1m%s\033[0m created!\n"
+	passcEntryCreatedText         = "󰸞 Entry \033[1m%s\033[0m created\n"
+	passcEntryRemovedText         = "󰸞 Entry \033[1m%s\033[0m has been removed\n"
+	passcImportText               = "󰸞 \033[1m%s\033[0m has been imported: %d entries\n"
+	passcImportRepeatdText        = " \033[1m%s\033[0m could not be imported. Name(s) \033[1m%s\033[0m already exist\n"
 	passcClipboardText            = "󰢨 Copied \033[1m%s\033[0m to clipboard"
 	passcPasswordParamErrNumber   = " Parameter must be a number"
 	passcPasswordParamErrPositive = " Parameter must be a positive number"

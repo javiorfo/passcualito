@@ -81,23 +81,23 @@ func (e Encryptor) encryptText(text string, isAppend bool) error {
 func (e Encryptor) readEncryptedText() (string, error) {
 	file, err := os.Open(e.FilePath)
 	if err != nil {
-		return "", fmt.Errorf("Error open file %s: %v", e.FilePath, err)
+		return "", fmt.Errorf("open file %s: %v", e.FilePath, err)
 	}
 	defer file.Close()
 
 	block, err := aes.NewCipher([]byte(e.MasterPassword))
 	if err != nil {
-		return "", fmt.Errorf("Error cipher: %v", err)
+		return "", fmt.Errorf("cipher: %v", err)
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return "", fmt.Errorf("Error gcm: %v", err)
+		return "", fmt.Errorf("gcm: %v", err)
 	}
 
 	data, err := io.ReadAll(file)
 	if err != nil {
-		return "", fmt.Errorf("Error reading file: %v", err)
+		return "", fmt.Errorf("reading file: %v", err)
 	}
 
 	nonce := data[:gcm.NonceSize()]
@@ -108,7 +108,7 @@ func (e Encryptor) readEncryptedText() (string, error) {
 
 	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		return "", fmt.Errorf("Error extracting plaintext: %v", err)
+		return "", fmt.Errorf("extracting plaintext: %v", err)
 	}
 
 	return string(plaintext), nil
