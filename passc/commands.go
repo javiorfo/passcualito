@@ -86,6 +86,7 @@ func add() *cobra.Command {
 			}
 
 			fmt.Printf(passcEntryCreatedText, name)
+			data.print(true)
 			makeBackUp()
 		},
 	}

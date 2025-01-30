@@ -1,5 +1,5 @@
 # passcualito
-*Simple Password Manager for Linux*
+*Simple Command-Line Password Manager for Linux*
 
 ## Caveats
 - Go version **1.23.4**
@@ -41,6 +41,32 @@ Flags:
   -h, --help   help for passc
 
 Use "passc [command] --help" for more information about a command.
+```
+
+## Usage
+- By executing any command, if there is no password store created, **passcualito** will ask for a `Master Password` (6 characters at least). 
+- Once the master password is created also the password store will be (**$HOME/.passcualito/store.passc**)
+- When the user is logged, **passcualito** will keep some kind of session using **/tmp system folder**
+
+
+<img src="https://github.com/javiorfo/img/blob/master/passcualito/passcualito.gif?raw=true" alt="passcualito"/>
+
+#### Notes
+- Command `passc add entry_name` could have optionals flags: 
+    - **-p p4$$w0rd_here** (if not enter a password manually a random 20 char password will be generated) 
+    - **-i "some extra useful info"** 
+- Command `passc password 10` (10 char password) could have optionals flags: 
+    - **-c a** (alphabetic password)
+    - **-c n** (numeric password)
+    - **-c an** (alphanumeric password)
+    - **-c anc** (alphanumeric + capitals password)
+- Format of **JSON** data:
+```json
+{
+  "name": "name_of_entry",
+  "password": "password_value",
+  "info": "some extra info (could be empty)"
+}
 ```
 
 ---
