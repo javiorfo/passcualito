@@ -19,7 +19,7 @@ yay -S passcualito
 ```
 
 ## Description
-```bash
+```text
 Usage:
   passc [command]
 
