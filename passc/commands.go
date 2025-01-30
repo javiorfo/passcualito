@@ -20,6 +20,7 @@ func Builder() *cobra.Command {
 
 	rootCmd.AddCommand(add()) // bkp
 	rootCmd.AddCommand(copy())
+	rootCmd.AddCommand(edit()) // bkp
 	rootCmd.AddCommand(export())
 	rootCmd.AddCommand(importer()) // bkp
 	rootCmd.AddCommand(list())
@@ -42,6 +43,10 @@ func add() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
+				if errors.Is(err, masterPasswordError) {
+					fmt.Println(err)
+					return
+				}
 				log.Println("checking Master Password: ", err.Error())
 				return
 			}
@@ -97,6 +102,10 @@ func copy() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
+				if errors.Is(err, masterPasswordError) {
+					fmt.Println(err)
+					return
+				}
 				log.Println("checking Master Password: ", err.Error())
 				return
 			}
@@ -134,6 +143,91 @@ func copy() *cobra.Command {
 	}
 }
 
+func edit() *cobra.Command {
+	var password string
+	var info string
+	edit := &cobra.Command{
+		Use:   "edit [name]",
+		Short: "Edit the entry",
+		Long:  "Edit the entry. Ex: passc edit entry_name -p 1234 -i \"some info\"",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			encryptor, err := checkMasterPassword()
+			if err != nil {
+				if errors.Is(err, masterPasswordError) {
+					fmt.Println(err)
+					return
+				}
+				log.Println("checking Master Password: ", err.Error())
+				return
+			}
+
+			content, err := encryptor.readEncryptedText()
+			if err != nil {
+				if errors.Is(err, emptyFile) {
+					fmt.Println(err.Error())
+					return
+				}
+				fmt.Println(passcInvalidPassword)
+				removeTemp()
+				return
+			}
+
+			contentLength := len(content)
+			name := args[0]
+
+			// result of all data without the input name
+			var data Data
+			result := steams.OfSlice(strings.Split(content, passcItemSeparator)).
+				Filter(predicateByNameAndSetData(name, &data)).Reduce("", reducer)
+
+			resultLength := len(result)
+			// If lengths are equal, no entry has been cut off
+			if contentLength == resultLength {
+				fmt.Printf(passcNameNotFoundText, name)
+			} else {
+				if password != "" {
+					data.Password = password
+				}
+				if info != "" {
+					data.Info = info
+				}
+				json, err := data.toJSON()
+				if err != nil {
+					log.Println("converting data to JSON: ", err.Error())
+					return
+				}
+
+				// Add edited item to final string
+				result = result + passcItemSeparator + *json
+
+				// override store.passc completly
+				if err := encryptor.encryptText(result, false); err != nil {
+					log.Println("encryting text: ", err.Error())
+					return
+				}
+				fmt.Printf(passcEntryEditedText, name)
+				data.print(true)
+			}
+		},
+	}
+
+	edit.Flags().StringVarP(&password, "password", "p", "", "Password for the entry")
+	edit.Flags().StringVarP(&info, "info", "i", "", "Additional info for the entry")
+
+	return edit
+}
+
+func predicateByNameAndSetData(name string, data *Data) func(string) bool {
+	return func(value string) bool {
+		isInput := strings.Contains(value, fmt.Sprintf(`"name":"%s"`, name))
+		if isInput {
+			data.fromJSON([]byte(value))
+		}
+		return !isInput
+	}
+}
+
 func export() *cobra.Command {
 	return &cobra.Command{
 		Use:   "export",
@@ -142,6 +236,10 @@ func export() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
+				if errors.Is(err, masterPasswordError) {
+					fmt.Println(err)
+					return
+				}
 				log.Println("checking Master Password: ", err.Error())
 				return
 			}
@@ -175,6 +273,10 @@ func importer() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
+				if errors.Is(err, masterPasswordError) {
+					fmt.Println(err)
+					return
+				}
 				log.Println("checking Master Password: ", err.Error())
 				return
 			}
@@ -202,7 +304,7 @@ func importer() *cobra.Command {
 			}
 
 			dataSlice := stringToDataSlice(content)
-            // Filters matched names between file.json and the actual store
+			// Filters matched names between file.json and the actual store
 			repeatedSlice := steams.OfSlice(dataSlice).
 				Filter(func(outer Data) bool {
 					return steams.OfSlice(dataFromJson).
@@ -259,6 +361,10 @@ func list() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
+				if errors.Is(err, masterPasswordError) {
+					fmt.Println(err)
+					return
+				}
 				log.Println("checking Master Password: ", err.Error())
 				return
 			}
@@ -284,14 +390,14 @@ func list() *cobra.Command {
 			isSearcOne := len(args) == 1
 
 			fmt.Println(passcStoreTitle)
-            var found bool
+			var found bool
 			for i, data := range steams.OfSlice(items).Sorted(sortByName).Collect() {
 				isEnd := i == length-1
 				if isSearcOne {
 					name := args[0]
-					if strings.Contains(strings.ToLower(data.Name),strings.ToLower(name)) {
+					if strings.Contains(strings.ToLower(data.Name), strings.ToLower(name)) {
 						data.print(true)
-                        found = true
+						found = true
 					}
 					if isEnd && !found {
 						fmt.Printf(passcNameNotFoundText, name)
@@ -375,6 +481,10 @@ func remove() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
+				if errors.Is(err, masterPasswordError) {
+					fmt.Println(err)
+					return
+				}
 				log.Println("checking Master Password: ", err.Error())
 				return
 			}
@@ -393,6 +503,7 @@ func remove() *cobra.Command {
 			contentLength := len(content)
 			name := args[0]
 
+			// result of all data without the input name
 			result := steams.OfSlice(strings.Split(content, passcItemSeparator)).
 				Filter(predicateByName(name)).Reduce("", reducer)
 

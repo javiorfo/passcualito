@@ -2,6 +2,7 @@ package passc
 
 import (
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +11,8 @@ import (
 	"github.com/howeyc/gopass"
 	"github.com/javiorfo/steams/opt"
 )
+
+var masterPasswordError = errors.New(passcMasterPasswordLenErr)
 
 func generateRandomPasswordDefault() (*string, error) {
 	return generateRandomPassword(opt.Empty[int](), opt.Empty[string]())
@@ -68,10 +71,12 @@ func checkMasterPassword() (*Encryptor, error) {
 	}
 
 	fmt.Print(passcMasterPasswordText)
-	// TODO validate length of master password
 	bytePassword, err := gopass.GetPasswdMasked()
 	if err != nil {
 		return nil, fmt.Errorf("%v", err)
+	}
+	if len(bytePassword) < 6 {
+		return nil, masterPasswordError
 	}
 	masterPassword = alignPassword(string(bytePassword))
 

@@ -93,22 +93,22 @@ func getDataSliceFromJsonFile(filePath string) ([]Data, error) {
 		return nil, err
 	}
 
-    if err := getRepeatedNames(data); err != nil {
-        return nil, err
-    }
+	if err := getRepeatedNames(data); err != nil {
+		return nil, err
+	}
 
 	return data, nil
 }
 
 func getRepeatedNames(dataSlice []Data) error {
-    repeated :=  steams.GroupByCounting(steams.OfSlice(dataSlice), func(d Data) string {
+	repeated := steams.GroupByCounting(steams.OfSlice(dataSlice), func(d Data) string {
 		return d.Name
 	}).Filter(func(s string, i int) bool {
-        return i > 1
-    }).KeysToSteam().Collect()
+		return i > 1
+	}).KeysToSteam().Collect()
 
-    if len(repeated) > 0 {
-        return fmt.Errorf("repeated names (%s)", strings.Join(repeated, ", "))
-    }
-    return nil
+	if len(repeated) > 0 {
+		return fmt.Errorf("repeated names (%s)", strings.Join(repeated, ", "))
+	}
+	return nil
 }
