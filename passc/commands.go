@@ -18,15 +18,15 @@ func Builder() *cobra.Command {
 		Use: passcAppCommandName,
 	}
 
-	rootCmd.AddCommand(add()) // bkp
+	rootCmd.AddCommand(add())
 	rootCmd.AddCommand(copy())
-	rootCmd.AddCommand(edit()) // bkp
+	rootCmd.AddCommand(edit())
 	rootCmd.AddCommand(export())
-	rootCmd.AddCommand(importer()) // bkp
+	rootCmd.AddCommand(importer())
 	rootCmd.AddCommand(list())
 	rootCmd.AddCommand(logout())
 	rootCmd.AddCommand(password())
-	rootCmd.AddCommand(remove()) // bkp
+	rootCmd.AddCommand(remove())
 	rootCmd.AddCommand(version())
 
 	return rootCmd
@@ -37,9 +37,11 @@ func add() *cobra.Command {
 	var info string
 
 	add := &cobra.Command{
-		Use:   "add [name]",
-		Short: "Add a new entry to protect",
-		Args:  cobra.ExactArgs(1),
+		Use:     "add [name]",
+		Short:   "Add a new entry to the store",
+		Long:    "Add a new entry to the store. Password (-p flag) and Info (-i flag) are optionals",
+		Example: "passc add acme -p p4$$w0rd -i \"acme.com page\"",
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
@@ -84,6 +86,7 @@ func add() *cobra.Command {
 			}
 
 			fmt.Printf(passcEntryCreatedText, name)
+			makeBackUp()
 		},
 	}
 
@@ -95,10 +98,11 @@ func add() *cobra.Command {
 
 func copy() *cobra.Command {
 	return &cobra.Command{
-		Use:   "copy [key]",
-		Short: "Copy password to clipboard",
-		Long:  "Copy password to clipboard. Ex: passc copy my_key",
-		Args:  cobra.ExactArgs(1),
+		Use:     "copy [name]",
+		Short:   "Copy password to clipboard",
+		Long:    "Copy password to clipboard",
+		Example: "passc copy name_here",
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
@@ -147,10 +151,11 @@ func edit() *cobra.Command {
 	var password string
 	var info string
 	edit := &cobra.Command{
-		Use:   "edit [name]",
-		Short: "Edit the entry",
-		Long:  "Edit the entry. Ex: passc edit entry_name -p 1234 -i \"some info\"",
-		Args:  cobra.ExactArgs(1),
+		Use:     "edit [name]",
+		Short:   "Edit the entry.",
+		Long:    "Edit the entry. Password with -p and Info with -i. Each one is optional",
+		Example: "passc edit name_here -p 1234 -i \"some info\"",
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
@@ -208,6 +213,7 @@ func edit() *cobra.Command {
 				}
 				fmt.Printf(passcEntryEditedText, name)
 				data.print(true)
+				makeBackUp()
 			}
 		},
 	}
@@ -230,9 +236,10 @@ func predicateByNameAndSetData(name string, data *Data) func(string) bool {
 
 func export() *cobra.Command {
 	return &cobra.Command{
-		Use:   "export",
-		Short: "Export data in a JSON file",
-		Long:  "Export data in a JSON file",
+		Use:     "export",
+		Short:   "Export data in a JSON file",
+		Long:    "Export data in a JSON file",
+		Example: "passc export",
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
@@ -266,10 +273,11 @@ func export() *cobra.Command {
 
 func importer() *cobra.Command {
 	return &cobra.Command{
-		Use:   "import [key]",
-		Short: "Import entries from a JSON file",
-		Long:  "Import entries from a JSON file. Ex: passc import /path/to/file.json",
-		Args:  cobra.MaximumNArgs(1),
+		Use:     "import [filepath]",
+		Short:   "Import entries from a JSON file",
+		Long:    "Import entries from a JSON file",
+		Example: "passc import /path/to/file.json",
+		Args:    cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
@@ -329,6 +337,7 @@ func importer() *cobra.Command {
 				log.Println("encrypting data: ", err.Error())
 			}
 			fmt.Printf(passcImportText, filePath, len(dataFromJson))
+			makeBackUp()
 		},
 	}
 }
@@ -354,10 +363,11 @@ func encryptDataSlice(encryptor *Encryptor, dataSlice []Data) error {
 
 func list() *cobra.Command {
 	return &cobra.Command{
-		Use:   "list [key]",
-		Short: "List all properties of a key",
-		Long:  "List all properties of a key. Ex: passc list my_key",
-		Args:  cobra.MaximumNArgs(1),
+		Use:     "list [name]",
+		Short:   "List all properties of the entry by name",
+		Long:    "List all properties of the entry by name",
+		Example: "passc list name_here",
+		Args:    cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
@@ -416,9 +426,10 @@ func sortByName(d1, d2 Data) bool {
 
 func logout() *cobra.Command {
 	return &cobra.Command{
-		Use:   "logout",
-		Short: "Logout of the app",
-		Long:  "Logout of the app. This allows you to enter the master password again",
+		Use:     "logout",
+		Short:   "Logout of the app",
+		Long:    "Logout of the app. This allows you to enter the master password again",
+		Example: "passc logout",
 		Run: func(cmd *cobra.Command, args []string) {
 			err := removeTemp()
 			_ = err // Ignored
@@ -430,10 +441,11 @@ func logout() *cobra.Command {
 func password() *cobra.Command {
 	var charset string
 	password := &cobra.Command{
-		Use:   "password [number]",
-		Short: "Generates a password of the number passed",
-		Long:  "Generates a password of the number passed. Ex: passc password 12",
-		Args:  cobra.ExactArgs(1),
+		Use:     "password [number]",
+		Short:   "Generates a password of the number passed",
+		Long:    "Generates a password of the number passed. Charset (-c flag) could be a, n, an or anc",
+		Example: "passc password 12 -c an",
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			number, err := strconv.Atoi(args[0])
 			if err != nil {
@@ -474,10 +486,11 @@ func password() *cobra.Command {
 
 func remove() *cobra.Command {
 	return &cobra.Command{
-		Use:   "remove [name]",
-		Short: "Remove the entry",
-		Long:  "Remove the entry. Ex: passc remove entry_name",
-		Args:  cobra.ExactArgs(1),
+		Use:     "remove [name]",
+		Short:   "Remove the entry",
+		Long:    "Remove the entry if exists",
+		Example: "passc remove entry_name",
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			encryptor, err := checkMasterPassword()
 			if err != nil {
@@ -524,6 +537,7 @@ func remove() *cobra.Command {
 					}
 				}
 				fmt.Printf(passcEntryRemovedText, name)
+				makeBackUp()
 			}
 		},
 	}
@@ -545,9 +559,10 @@ func predicateByName(name string) func(string) bool {
 
 func version() *cobra.Command {
 	return &cobra.Command{
-		Use:   "version",
-		Short: "passcualito version",
-		Long:  "passcualito version",
+		Use:     "version",
+		Short:   "app version",
+		Long:    "app version",
+		Example: "passc version",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println(passcVersion)
 		},

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"crypto/aes"
@@ -150,4 +151,33 @@ func exportToFile(content string) error {
 		return err
 	}
 	return nil
+}
+
+func makeBackUp() {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Printf("finding user home dir: %v\n", err)
+		return
+	}
+	src := homeDir + "/" + passcPathStoreFile
+	srcFile, err := os.Open(src)
+	if err != nil {
+		log.Printf("opening file: %v\n", err)
+		return
+	}
+	defer srcFile.Close()
+
+	dst := homeDir + "/" + passcDirFolder + "/" + passcBackUpFile
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		log.Printf("creating file: %v\n", err)
+		return
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, srcFile)
+	if err != nil {
+		log.Printf("copying to backup file: %v\n", err)
+		return
+	}
 }

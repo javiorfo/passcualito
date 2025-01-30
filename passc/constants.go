@@ -24,7 +24,9 @@ const (
 	passcExportText               = "󰸞 Data exported to \033[1m %s\033[0m\n"
 	passcVersion                  = "Passcualito v0.1.0"
 	passcDirFolder                = ".passcualito"
-	passcKeysFile                 = "store.passc"
+	passcStoreFile                = "store.passc"
+	passcBackUpFile               = "store.bkp"
+	passcPathStoreFile            = passcDirFolder + "/" + passcStoreFile
 	passcExtension                = ".passc"
 	passcExportFilename           = "passcualito.json"
 	passcItemSeparator            = "|"

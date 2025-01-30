@@ -54,7 +54,7 @@ func checkMasterPassword() (*Encryptor, error) {
 	}
 
 	dirPath := filepath.Join(homeDir, passcDirFolder)
-	filePath := filepath.Join(dirPath, passcKeysFile)
+	filePath := filepath.Join(dirPath, passcStoreFile)
 
 	var masterPassword string
 	_, errFile := os.Stat(filePath)
