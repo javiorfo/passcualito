@@ -65,7 +65,7 @@ func (d Data) isNameMatched(inputName string) bool {
 	nameLower := strings.ToLower(d.Name)
 	inputNameLower := strings.ToLower(inputName)
 	isContained := strings.Contains(nameLower, inputNameLower)
-	if len(inputNameLower) < 3 {
+	if len(inputNameLower) == 1 {
 		isContained = strings.HasPrefix(strings.ToLower(d.Name), strings.ToLower(inputName))
 	}
 	return isContained

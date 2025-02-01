@@ -44,22 +44,20 @@ func removeTemp() error {
 func getTempEncryptor(filePath string) opt.Optional[Encryptor] {
 	var tempFilePath string
 
-	const noPassc = "NO_PASSC"
 	tempDir := os.TempDir()
 	err := filepath.Walk(tempDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return err
+			return nil
 		}
 
 		if !info.IsDir() && filepath.Ext(path) == passcExtension {
 			tempFilePath = path
-			return fmt.Errorf(noPassc)
 		}
 
 		return nil
 	})
 
-	if err != nil && err.Error() != noPassc {
+	if err != nil && tempFilePath == "" {
 		return opt.Empty[Encryptor]()
 	}
 
