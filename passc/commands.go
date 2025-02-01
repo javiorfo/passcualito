@@ -406,7 +406,7 @@ func list() *cobra.Command {
 				isEnd := i == length-1
 				if isSearcOne {
 					name := args[0]
-					if strings.Contains(strings.ToLower(data.Name), strings.ToLower(name)) {
+					if data.isNameMatched(name) {
 						data.print(true)
 						found = true
 					}

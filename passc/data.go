@@ -61,6 +61,16 @@ func (d Data) print(isEnd bool) {
 	}
 }
 
+func (d Data) isNameMatched(inputName string) bool {
+	nameLower := strings.ToLower(d.Name)
+	inputNameLower := strings.ToLower(inputName)
+	isContained := strings.Contains(nameLower, inputNameLower)
+	if len(inputNameLower) < 3 {
+		isContained = strings.HasPrefix(strings.ToLower(d.Name), strings.ToLower(inputName))
+	}
+	return isContained
+}
+
 func stringToDataSlice(content string) []Data {
 	items := strings.Split(content, passcItemSeparator)
 	return steams.Mapping(steams.OfSlice(items), func(v string) Data {

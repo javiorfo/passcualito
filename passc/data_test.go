@@ -148,9 +148,9 @@ func TestIsNameTaken(t *testing.T) {
 
 func TestGetRepeatedNames(t *testing.T) {
 	tests := []struct {
-		name     string
+		name      string
 		dataSlice []Data
-		expected error
+		expected  error
 	}{
 		{
 			name: "no repeated names",
@@ -171,9 +171,9 @@ func TestGetRepeatedNames(t *testing.T) {
 			expected: fmt.Errorf("repeated names (John)"),
 		},
 		{
-			name:     "empty data slice",
+			name:      "empty data slice",
 			dataSlice: []Data{},
-			expected: nil,
+			expected:  nil,
 		},
 	}
 
@@ -186,6 +186,45 @@ func TestGetRepeatedNames(t *testing.T) {
 				}
 			} else if actual != nil || test.expected != nil {
 				t.Errorf("expected error %v, got %v", test.expected, actual)
+			}
+		})
+	}
+}
+
+func TestIsNameMatched(t *testing.T) {
+	tests := []struct {
+		name     string
+		data     Data
+		expected bool
+	}{
+		{
+			name: "soma",
+			data: Data{
+				Name: "some",
+			},
+			expected: false,
+		},
+		{
+			name: "som",
+			data: Data{
+				Name: "some",
+			},
+			expected: true,
+		},
+		{
+			name: "s",
+			data: Data{
+				Name: "some",
+			},
+			expected: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.data.isNameMatched(test.name)
+			if result != test.expected {
+				t.Errorf("expected %t, got %t", test.expected, result)
 			}
 		})
 	}
