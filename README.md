@@ -2,11 +2,16 @@
 *Simple Command-Line Password Manager for Linux*
 
 ## Caveats
-- Go version **1.23.4**
-- This library has been developed on and for Linux following open source philosophy.
+- Go version used **1.23.4**
+- This program has been developed on and for Linux following open source philosophy.
 
 ## Installation
-- Downloading, compiling and installing manually:
+- Using Go
+```bash
+go install github.com/javiorfo/passcualito@latest
+```
+
+- Downloading, compiling and installing manually (Linux):
 ```bash
 git clone https://github.com/javiorfo/passcualito
 cd passcualito
