@@ -1,0 +1,18 @@
+[package]
+name = "passcualito"
+version = "0.1.0"
+edition = "2024"
+description = "Simple Command-Line Password Manager for Linux"
+authors = ["Javier Orfo <javierorfo@protonmail.com>"]
+license = "MIT"
+repository = "https://github.com/javiorfo/passcualito"
+homepage = "https://github.com/javiorfo/passcualito#readme"
+keywords = ["password-manager", "password-store", "password-manager-linux"]
+
+[dependencies]
+clap = { version = "4.5.36", features = ["derive"] }
+rand = "0.9.0"
+aes-gcm = "0.10"
+serde_json = "1.0"
+dirs = "4.0"
+serde = { version = "1.0.219", features = ["derive"] }
