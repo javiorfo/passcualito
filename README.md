@@ -2,25 +2,17 @@
 *Simple Command-Line Password Manager for Linux*
 
 ## Caveats
-- Go version used **1.23.4**
 - This program has been developed on and for Linux following open source philosophy.
 
 ## Installation
-- Using Go
+- Using Cargo
 ```bash
-go install github.com/javiorfo/passcualito@latest
+cargo install passcualito
 ```
 
-- Downloading, compiling and installing manually (Linux):
+- From AUR Arch Linux (using paru or yay):
 ```bash
-git clone https://github.com/javiorfo/passcualito
-cd passcualito
-sudo make clean install
-```
-
-- From AUR Arch Linux:
-```bash
-yay -S passcualito
+paru -S passcualito
 ```
 
 ## Description
@@ -30,14 +22,12 @@ Usage:
 
 Available Commands:
   add         Add a new entry to the store
-  completion  Generate the autocompletion script for the specified shell
   copy        Copy password to clipboard
   edit        Edit the entry.
   export      Export data in a JSON file
   help        Help about any command
   import      Import entries from a JSON file
   list        List all properties of the entry by name
-  logout      Logout of the app
   password    Generates a password of the number passed
   remove      Remove the entry
   version     app version
@@ -50,7 +40,7 @@ Use "passc [command] --help" for more information about a command.
 
 ## Usage
 - By executing any command, if there is no password store created, **passcualito** will ask for a `Master Password` (6 characters at least). 
-- Once the master password is created also the password store will be (**$HOME/.passcualito/store.passc**)
+- Once the master password is created also the password store will be (**$HOME/.passcualito/passwords.dat**)
 - When the user is logged, **passcualito** will keep some kind of session using **/tmp system folder**
 
 
