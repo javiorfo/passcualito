@@ -3,8 +3,8 @@ use std::{
     process::{Command, Stdio},
 };
 
-use crate::{password::Password, storage::Storage};
 use crate::{model::Entry, password::Charset};
+use crate::{password::Password, storage::Storage};
 use anyhow::bail;
 use clap::{Parser, Subcommand};
 use rpassword::prompt_password_stdout;
@@ -68,7 +68,8 @@ pub fn run_cli() -> anyhow::Result<()> {
     let args = Cli::parse();
 
     println!("\x1B[1m  Passcualito\x1B[0m");
-    let master_password = Password::validate_master_password(prompt_password_stdout("  Master Password: ")?)?;
+    let master_password =
+        Password::validate_master_password(prompt_password_stdout("  Master Password: ")?)?;
 
     let mut storage = match Storage::load_store(&master_password) {
         Ok(s) => s,
@@ -151,10 +152,14 @@ pub fn run_cli() -> anyhow::Result<()> {
         },
         Commands::Copy { entry } => match storage.get_entry(entry) {
             Some(entry) => {
-                let mut child = Command::new("xclip")
-                    .args(["-selection", "clipboard"])
-                    .stdin(Stdio::piped())
-                    .spawn()?;
+                let mut child = if std::env::var("WAYLAND_DISPLAY").is_ok() {
+                    Command::new("wl-copy").stdin(Stdio::piped()).spawn()?
+                } else {
+                    Command::new("xclip")
+                        .args(["-selection", "clipboard"])
+                        .stdin(Stdio::piped())
+                        .spawn()?
+                };
 
                 {
                     let stdin = child.stdin.as_mut().expect("Failed to open stdin");

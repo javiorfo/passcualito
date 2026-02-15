@@ -28,16 +28,16 @@ impl Entry {
         println!("├── \x1B[1mname:\x1B[0m     {}", self.name);
         println!("├── \x1B[1mpassword:\x1B[0m {}", self.password);
         if is_end {
-            println!("└── \x1B[1minfo:\x1B[0m    {}", self.info);
+            println!("└── \x1B[1minfo:\x1B[0m     {}", self.info);
         } else {
-            println!("├── \x1B[1minfo:\x1B[0m    {}", self.info);
+            println!("├── \x1B[1minfo:\x1B[0m     {}", self.info);
         }
     }
 
     pub fn set_password(&mut self, password: String) {
         self.password = password;
     }
-    
+
     pub fn set_info(&mut self, info: String) {
         self.info = info;
     }

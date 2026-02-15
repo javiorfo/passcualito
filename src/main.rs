@@ -1,8 +1,8 @@
-mod model;
-mod crypto;
-mod storage;
 mod cli;
+mod crypto;
+mod model;
 mod password;
+mod storage;
 
 fn main() {
     if let Err(e) = cli::run_cli() {
