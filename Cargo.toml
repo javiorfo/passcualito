@@ -7,7 +7,7 @@ authors = ["Javier Orfo <javierorfo@protonmail.com>"]
 license = "MIT"
 repository = "https://github.com/javiorfo/passcualito"
 homepage = "https://github.com/javiorfo/passcualito#readme"
-keywords = ["password-manager", "password-store", "password-manager-linux"]
+keywords = ["password-manager", "password-store", "password-linux"]
 
 [[bin]]
 name = "passc"
