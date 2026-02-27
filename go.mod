@@ -1,11 +1,12 @@
 module github.com/javiorfo/passcualito
 
-go 1.23.4
+go 1.26.0
 
 require (
 	github.com/atotto/clipboard v0.1.4
 	github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef
-	github.com/javiorfo/steams v1.1.0
+	github.com/javiorfo/nilo v1.6.0
+	github.com/javiorfo/steams/v2 v2.0.0
 	github.com/spf13/cobra v1.8.1
 )
 

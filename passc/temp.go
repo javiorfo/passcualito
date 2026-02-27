@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/javiorfo/steams/opt"
+	"github.com/javiorfo/nilo"
 )
 
 func newTemp(masterPassword string) error {
-	key, err := generateRandomPassword(opt.Of(16), opt.Empty[string]())
+	key, err := generateRandomPassword(nilo.Value(16), nilo.Nil[string]())
 	filePath := fmt.Sprintf("%s/%s%s", os.TempDir(), *key, passcExtension)
 	if err != nil {
 		return fmt.Errorf("Error generating tmp password: %v", err)
@@ -41,7 +41,7 @@ func removeTemp() error {
 	return nil
 }
 
-func getTempEncryptor(filePath string) opt.Optional[Encryptor] {
+func getTempEncryptor(filePath string) nilo.Option[Encryptor] {
 	var tempFilePath string
 
 	tempDir := os.TempDir()
@@ -58,7 +58,7 @@ func getTempEncryptor(filePath string) opt.Optional[Encryptor] {
 	})
 
 	if err != nil && tempFilePath == "" {
-		return opt.Empty[Encryptor]()
+		return nilo.Nil[Encryptor]()
 	}
 
 	tempEncryptor := Encryptor{
@@ -67,8 +67,8 @@ func getTempEncryptor(filePath string) opt.Optional[Encryptor] {
 	}
 	password, err := tempEncryptor.readEncryptedText()
 	if err != nil {
-		return opt.Empty[Encryptor]()
+		return nilo.Nil[Encryptor]()
 	}
 
-	return opt.Of(Encryptor{MasterPassword: password, FilePath: filePath})
+	return nilo.Value(Encryptor{MasterPassword: password, FilePath: filePath})
 }

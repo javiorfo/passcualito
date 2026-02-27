@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/atotto/clipboard"
-	"github.com/javiorfo/steams"
-	"github.com/javiorfo/steams/opt"
+	"github.com/javiorfo/nilo"
+	"github.com/javiorfo/steams/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -70,7 +70,9 @@ func add() *cobra.Command {
 			if err != nil {
 				if !errors.Is(err, emptyFile) {
 					fmt.Println(passcInvalidPassword)
-					removeTemp()
+					if err := removeTemp(); err != nil {
+						fmt.Println(err)
+					}
 					return
 				}
 			}
@@ -122,28 +124,28 @@ func copy() *cobra.Command {
 					return
 				}
 				fmt.Println(passcInvalidPassword)
-				removeTemp()
+				if err := removeTemp(); err != nil {
+					fmt.Println(err)
+				}
 				return
 			}
-			items := stringToDataSlice(content)
-			length := len(items)
-			for i, data := range items {
-				isEnd := i == length-1
-				name := args[0]
-				if data.Name == name {
-					err = clipboard.WriteAll(data.Password)
-					if err != nil {
-						log.Println("copying to clipboard: ", err.Error())
-					} else {
-						fmt.Printf(passcClipboardText, name)
-					}
-					break
-				}
-				if isEnd {
-					fmt.Printf(passcNameNotFoundText, name)
-				}
 
-			}
+			items := stringToDataSlice(content)
+			name := args[0]
+
+			steams.FromSlice(items).Find(func(d Data) bool {
+				return d.Name == name
+			}).Map(func(d Data) Data {
+				err = clipboard.WriteAll(d.Password)
+				if err != nil {
+					log.Println("copying to clipboard: ", err.Error())
+				} else {
+					fmt.Printf(passcClipboardText, name)
+				}
+				return d
+			}).IfNil(func() {
+				fmt.Printf(passcNameNotFoundText, name)
+			})
 		},
 	}
 }
@@ -175,7 +177,9 @@ func edit() *cobra.Command {
 					return
 				}
 				fmt.Println(passcInvalidPassword)
-				removeTemp()
+				if err := removeTemp(); err != nil {
+					fmt.Println(err)
+				}
 				return
 			}
 
@@ -184,8 +188,8 @@ func edit() *cobra.Command {
 
 			// result of all data without the input name
 			var data Data
-			result := steams.OfSlice(strings.Split(content, passcItemSeparator)).
-				Filter(predicateByNameAndSetData(name, &data)).Reduce("", reducer)
+			result := steams.FromSlice(strings.Split(content, passcItemSeparator)).
+				Filter(predicateByNameAndSetData(name, &data)).Fold("", reducer)
 
 			resultLength := len(result)
 			// If lengths are equal, no entry has been cut off
@@ -259,7 +263,9 @@ func export() *cobra.Command {
 					return
 				}
 				fmt.Println(passcInvalidPassword)
-				removeTemp()
+				if err := removeTemp(); err != nil {
+					fmt.Println(err)
+				}
 				return
 			}
 
@@ -307,17 +313,19 @@ func importer() *cobra.Command {
 					return
 				} else {
 					fmt.Println(passcInvalidPassword)
-					removeTemp()
+					if err := removeTemp(); err != nil {
+						fmt.Println(err)
+					}
 					return
 				}
 			}
 
 			dataSlice := stringToDataSlice(content)
 			// Filters matched names between file.json and the actual store
-			repeatedSlice := steams.OfSlice(dataSlice).
+			repeatedSlice := steams.FromSlice(dataSlice).
 				Filter(func(outer Data) bool {
-					return steams.OfSlice(dataFromJson).
-						AnyMatch(predicateMatchOuterData(outer))
+					return steams.FromSlice(dataFromJson).
+						Any(predicateMatchOuterData(outer))
 				}).
 				MapToString(func(d Data) string { return d.Name }).Collect()
 
@@ -387,42 +395,42 @@ func list() *cobra.Command {
 					return
 				}
 				fmt.Println(passcInvalidPassword)
-				removeTemp()
+				if err := removeTemp(); err != nil {
+					fmt.Println(err)
+				}
 				return
 			}
 
 			items := stringToDataSlice(content)
-			length := len(items)
-			if length == 0 {
+			if len(items) == 0 {
 				fmt.Println(passcEmptyFile)
 				return
 			}
 
-			isSearcOne := len(args) == 1
+			entries := steams.FromSlice(items).SortBy(sortByName)
+			if len(args) == 1 {
+				entries = entries.Filter(func(d Data) bool { return d.isNameMatch(args[0]) })
+			}
 
 			fmt.Println(passcStoreTitle)
-			var found bool
-			for i, data := range steams.OfSlice(items).Sorted(sortByName).Collect() {
-				isEnd := i == length-1
-				if isSearcOne {
-					name := args[0]
-					if data.isNameMatched(name) {
-						data.print(true)
-						found = true
-					}
-					if isEnd && !found {
-						fmt.Printf(passcNameNotFoundText, name)
-					}
-				} else {
-					data.print(isEnd)
-				}
+
+			count := entries.Count()
+			if count == 0 {
+				fmt.Printf(passcNameNotFoundText, args[0])
 			}
+
+			entries.ForEachIdx(func(i int, d Data) {
+				d.print(i == count-1)
+			})
 		},
 	}
 }
 
-func sortByName(d1, d2 Data) bool {
-	return d1.Name < d2.Name
+func sortByName(d1, d2 Data) int {
+	if d1.Name < d2.Name {
+		return -1
+	}
+	return 0
 }
 
 func logout() *cobra.Command {
@@ -432,8 +440,9 @@ func logout() *cobra.Command {
 		Long:    "Logout of the app. This allows you to enter the master password again",
 		Example: "passc logout",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := removeTemp()
-			_ = err // Ignored
+			if err := removeTemp(); err != nil {
+				fmt.Println(err)
+			}
 			fmt.Println(passcLogoutText)
 		},
 	}
@@ -458,21 +467,21 @@ func password() *cobra.Command {
 				return
 			}
 
-			var optCharset opt.Optional[string]
+			var optCharset nilo.Option[string]
 			switch charset {
 			case "n":
-				optCharset = opt.Of(passcCharsetNumeric)
+				optCharset = nilo.Value(passcCharsetNumeric)
 			case "a":
-				optCharset = opt.Of(passcCharsetAlpha)
+				optCharset = nilo.Value(passcCharsetAlpha)
 			case "an":
-				optCharset = opt.Of(passcCharsetAlphaNumeric)
+				optCharset = nilo.Value(passcCharsetAlphaNumeric)
 			case "anc":
-				optCharset = opt.Of(passcCharsetAlphaNumericCap)
+				optCharset = nilo.Value(passcCharsetAlphaNumericCap)
 			default:
-				optCharset = opt.Of(passcCharset)
+				optCharset = nilo.Value(passcCharset)
 			}
 
-			psswd, err := generateRandomPassword(opt.Of(number), optCharset)
+			psswd, err := generateRandomPassword(nilo.Value(number), optCharset)
 			if err != nil {
 				log.Println("generating random password: ", err.Error())
 				return
@@ -510,7 +519,9 @@ func remove() *cobra.Command {
 					return
 				}
 				fmt.Println(passcInvalidPassword)
-				removeTemp()
+				if err := removeTemp(); err != nil {
+					fmt.Println(err)
+				}
 				return
 			}
 
@@ -518,8 +529,8 @@ func remove() *cobra.Command {
 			name := args[0]
 
 			// result of all data without the input name
-			result := steams.OfSlice(strings.Split(content, passcItemSeparator)).
-				Filter(predicateByName(name)).Reduce("", reducer)
+			result := steams.FromSlice(strings.Split(content, passcItemSeparator)).
+				Filter(predicateByName(name)).Fold("", reducer)
 
 			resultLength := len(result)
 			// If lengths are equal, no entry has been cut off

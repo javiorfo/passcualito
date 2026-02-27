@@ -9,18 +9,18 @@ import (
 	"strings"
 
 	"github.com/howeyc/gopass"
-	"github.com/javiorfo/steams/opt"
+	"github.com/javiorfo/nilo"
 )
 
 var masterPasswordError = errors.New(passcMasterPasswordLenErr)
 
 func generateRandomPasswordDefault() (*string, error) {
-	return generateRandomPassword(opt.Empty[int](), opt.Empty[string]())
+	return generateRandomPassword(nilo.Nil[int](), nilo.Nil[string]())
 }
 
-func generateRandomPassword(size opt.Optional[int], charsetStr opt.Optional[string]) (*string, error) {
-	length := size.OrElse(20)
-	charset := charsetStr.OrElse(passcCharset)
+func generateRandomPassword(size nilo.Option[int], charsetStr nilo.Option[string]) (*string, error) {
+	length := size.Or(20)
+	charset := charsetStr.Or(passcCharset)
 	password := make([]byte, length)
 
 	_, err := rand.Read(password)
@@ -28,7 +28,7 @@ func generateRandomPassword(size opt.Optional[int], charsetStr opt.Optional[stri
 		return nil, err
 	}
 
-	for i := 0; i < length; i++ {
+	for i := range length {
 		password[i] = charset[int(password[i])%len(charset)]
 	}
 
@@ -63,8 +63,8 @@ func checkMasterPassword() (*Encryptor, error) {
 		fmt.Println(passcInitTitle)
 	} else {
 		encryptorFromTemp := getTempEncryptor(filePath)
-		if encryptorFromTemp.IsPresent() {
-			e := encryptorFromTemp.Get()
+		if encryptorFromTemp.IsValue() {
+			e := encryptorFromTemp.AsValue()
 			return &e, nil
 		}
 		fmt.Println(passcLoginTitle)

@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/javiorfo/steams"
+	"github.com/javiorfo/steams/v2"
 )
 
 type Data struct {
@@ -61,7 +61,7 @@ func (d Data) print(isEnd bool) {
 	}
 }
 
-func (d Data) isNameMatched(inputName string) bool {
+func (d Data) isNameMatch(inputName string) bool {
 	nameLower := strings.ToLower(d.Name)
 	inputNameLower := strings.ToLower(inputName)
 	isContained := strings.Contains(nameLower, inputNameLower)
@@ -73,7 +73,7 @@ func (d Data) isNameMatched(inputName string) bool {
 
 func stringToDataSlice(content string) []Data {
 	items := strings.Split(content, passcItemSeparator)
-	return steams.Mapping(steams.OfSlice(items), func(v string) Data {
+	return steams.Map(steams.FromSlice(items), func(v string) Data {
 		var data Data
 		err := data.fromJSON([]byte(v))
 		_ = err // Unimplemented
@@ -83,7 +83,7 @@ func stringToDataSlice(content string) []Data {
 
 func isNameTaken(content, name string) bool {
 	items := strings.Split(content, passcItemSeparator)
-	return steams.OfSlice(items).AnyMatch(func(v string) bool {
+	return steams.FromSlice(items).Any(func(v string) bool {
 		var data Data
 		err := data.fromJSON([]byte(v))
 		_ = err
@@ -111,11 +111,11 @@ func getDataSliceFromJsonFile(filePath string) ([]Data, error) {
 }
 
 func getRepeatedNames(dataSlice []Data) error {
-	repeated := steams.GroupByCounting(steams.OfSlice(dataSlice), func(d Data) string {
+	repeated := steams.GroupByCounting(steams.FromSlice(dataSlice), func(d Data) string {
 		return d.Name
 	}).Filter(func(s string, i int) bool {
 		return i > 1
-	}).KeysToSteam().Collect()
+	}).Keys().Collect()
 
 	if len(repeated) > 0 {
 		return fmt.Errorf("repeated names (%s)", strings.Join(repeated, ", "))

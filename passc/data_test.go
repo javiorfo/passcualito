@@ -222,7 +222,7 @@ func TestIsNameMatched(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := test.data.isNameMatched(test.name)
+			result := test.data.isNameMatch(test.name)
 			if result != test.expected {
 				t.Errorf("expected %t, got %t", test.expected, result)
 			}

@@ -3,7 +3,7 @@ package passc
 import (
 	"testing"
 
-	"github.com/javiorfo/steams/opt"
+	"github.com/javiorfo/nilo"
 )
 
 func TestAlignPassword(t *testing.T) {
@@ -21,32 +21,32 @@ func TestAlignPassword(t *testing.T) {
 func TestGenerateRandomPassword(t *testing.T) {
 	tests := []struct {
 		name     string
-		size     opt.Optional[int]
-		charset  opt.Optional[string]
+		size     nilo.Option[int]
+		charset  nilo.Option[string]
 		expected int
 	}{
 		{
 			name:     "default size and charset",
-			size:     opt.Empty[int](),
-			charset:  opt.Empty[string](),
+			size:     nilo.Nil[int](),
+			charset:  nilo.Nil[string](),
 			expected: 20,
 		},
 		{
 			name:     "custom size",
-			size:     opt.Of(10),
-			charset:  opt.Empty[string](),
+			size:     nilo.Value(10),
+			charset:  nilo.Nil[string](),
 			expected: 10,
 		},
 		{
 			name:     "custom charset",
-			size:     opt.Empty[int](),
-			charset:  opt.Of("abcdefghijklmnopqrstuvwxyz"),
+			size:     nilo.Nil[int](),
+			charset:  nilo.Value("abcdefghijklmnopqrstuvwxyz"),
 			expected: 20,
 		},
 		{
 			name:     "custom size and charset",
-			size:     opt.Of(15),
-			charset:  opt.Of("abcdefghijklmnopqrstuvwxyz"),
+			size:     nilo.Value(15),
+			charset:  nilo.Value("abcdefghijklmnopqrstuvwxyz"),
 			expected: 15,
 		},
 	}
