@@ -2,7 +2,7 @@
 *Simple Command-Line Password Manager for Linux*
 
 ## Caveats
-- Go version used **1.23.4**
+- Go version used **1.26.0**
 - This program has been developed on and for Linux following open source philosophy.
 
 ## Installation
