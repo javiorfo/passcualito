@@ -64,8 +64,7 @@ func checkMasterPassword() (*Encryptor, error) {
 	} else {
 		encryptorFromTemp := getTempEncryptor(filePath)
 		if encryptorFromTemp.IsValue() {
-			e := encryptorFromTemp.AsValue()
-			return &e, nil
+			return encryptorFromTemp.AsPtr(), nil
 		}
 		fmt.Println(passcLoginTitle)
 	}

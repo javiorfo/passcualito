@@ -408,15 +408,21 @@ func list() *cobra.Command {
 			}
 
 			entries := steams.FromSlice(items).SortBy(sortByName)
-			if len(args) == 1 {
+			isFiltered := len(args) == 1
+			if isFiltered {
 				entries = entries.Filter(func(d Data) bool { return d.isNameMatch(args[0]) })
 			}
-
-			fmt.Println(passcStoreTitle)
 
 			count := entries.Count()
 			if count == 0 {
 				fmt.Printf(passcNameNotFoundText, args[0])
+				return
+			}
+
+			if isFiltered {
+				fmt.Println(passcMatchTitle)
+			} else {
+				fmt.Println(passcStoreTitle)
 			}
 
 			entries.ForEachIdx(func(i int, d Data) {

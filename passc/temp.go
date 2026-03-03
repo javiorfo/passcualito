@@ -15,9 +15,9 @@ func newTemp(masterPassword string) error {
 	if err != nil {
 		return fmt.Errorf("Error generating tmp password: %v", err)
 	}
+
 	encryptor := &Encryptor{MasterPassword: *key, FilePath: filePath}
-	encryptor.encryptText(masterPassword, false)
-	return nil
+	return encryptor.encryptText(masterPassword, false)
 }
 
 func removeTemp() error {
